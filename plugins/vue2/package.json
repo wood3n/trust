@@ -1,0 +1,16 @@
+{
+  "name": "hust",
+  "version": "1.0.0",
+  "author": "wangkai",
+  "description": "cli-vue2",
+  "scripts": {
+    "build": "node esbuild.js"
+  },
+  "files": [
+    "lib/**/*",
+    "template/**/*"
+  ],
+  "engines": {
+    "node": ">= 14"
+  }
+}
