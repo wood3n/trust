@@ -108,7 +108,7 @@ export default function (projectConfig: ConfigType): webpack.Configuration {
         {
           test: /\.css$/i,
           use: getCSSLoader({
-            importLoader: 1,
+            importLoaders: 1,
             sourceMap: true,
             // .module.css will use css modules
             modules: {
@@ -120,7 +120,7 @@ export default function (projectConfig: ConfigType): webpack.Configuration {
           test: /\.less$/i,
           use: getCSSLoader(
             {
-              importLoader: 2,
+              importLoaders: 2,
               sourceMap: true,
               modules: {
                 auto: true,
@@ -140,7 +140,7 @@ export default function (projectConfig: ConfigType): webpack.Configuration {
           test: /\.(scss|sass)$/i,
           use: getCSSLoader(
             {
-              importLoader: 2,
+              importLoaders: 2,
               sourceMap: true,
               modules: {
                 auto: true,
