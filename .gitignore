@@ -19,3 +19,4 @@ pnpm-debug.log*
 
 # test directory
 temp
+package-lock.json

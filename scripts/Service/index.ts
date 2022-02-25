@@ -50,94 +50,104 @@ class Service {
 
   dev = async () => {
     logger.info("Starting the development server...\n");
-    const webpackConfig = this.resolveWebpackConfig();
-    const compiler = webpack(webpackConfig);
-    const { proxy } = this.projectConfig;
 
-    // 将代理地址添加到 Response header 上
-    // https://github.com/chimurai/http-proxy-middleware/issues/48#issuecomment-819717044
-    const onProxyRes: OnProxyResCallback = proxyRes => {
-      // @ts-expect-error
-      proxyRes.headers["x-real-url"] = `${proxyRes.req.protocol}//${proxyRes.req.host}${proxyRes.req.path}`;
-    };
+    try {
+      const webpackConfig = this.resolveWebpackConfig();
+      const compiler = webpack(webpackConfig);
+      const { proxy } = this.projectConfig;
 
-    if (Array.isArray(proxy)) {
-      proxy.forEach(options => {
-        options.onProxyRes = onProxyRes;
-      });
-    } else if (typeof proxy === "object") {
-      Object.keys(proxy).forEach(pattern => {
-        if (typeof proxy[pattern] === "string") {
-          proxy[pattern] = {
-            target: proxy[pattern],
-            onProxyRes,
-          };
-        } else if (typeof proxy[pattern] === "object") {
-          // @ts-expect-error wrong type check for string
-          proxy[pattern].onProxyRes = onProxyRes;
-        }
-      });
-    }
+      // 将代理地址添加到 Response header 上
+      // https://github.com/chimurai/http-proxy-middleware/issues/48#issuecomment-819717044
+      const onProxyRes: OnProxyResCallback = proxyRes => {
+        // @ts-expect-error
+        proxyRes.headers["x-real-url"] = `${proxyRes.req.protocol}//${proxyRes.req.host}${proxyRes.req.path}`;
+      };
+      if (Array.isArray(proxy)) {
+        proxy.forEach(options => {
+          options.onProxyRes = onProxyRes;
+        });
+      } else if (typeof proxy === "object") {
+        Object.keys(proxy).forEach(pattern => {
+          if (typeof proxy[pattern] === "string") {
+            proxy[pattern] = {
+              target: proxy[pattern],
+              onProxyRes,
+            };
+          } else if (typeof proxy[pattern] === "object") {
+            // @ts-expect-error wrong type check for string
+            proxy[pattern].onProxyRes = onProxyRes;
+          }
+        });
+      }
 
-    // 获取客户端ipv4
-    const localIPv4 = await WebpackDevServer.internalIP("v4");
-    let port = 3000;
-    portfinder.basePort = port;
-    port = await portfinder.getPortPromise();
+      // 获取客户端ipv4
+      const localIPv4 = await WebpackDevServer.internalIP("v4");
+      let port = 3000;
+      portfinder.basePort = port;
+      port = await portfinder.getPortPromise();
 
-    const server = new WebpackDevServer(
-      {
-        hot: true,
-        liveReload: false,
-        compress: true,
-        port,
-        host: "0.0.0.0",
-        proxy,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "*",
-          "Access-Control-Allow-Headers": "*",
+      const server = new WebpackDevServer(
+        {
+          open: true,
+          hot: true,
+          liveReload: false,
+          compress: true,
+          port,
+          host: "0.0.0.0",
+          proxy,
+          headers: {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+          },
         },
-      },
-      compiler
-    );
+        compiler
+      );
 
-    server.startCallback(() => {
-      // watch hust.config.js change
-      const watcher = chokidar.watch(this.projectConfigPath).on("change", () => {
-        logger.warn("checked hust.config.js changed, restarting the server...");
-        server.stopCallback(() => {
-          watcher.close();
-          this.dev();
+      server.startCallback(() => {
+        // watch hust.config.js change
+        const watcher = chokidar.watch(this.projectConfigPath).on("change", () => {
+          logger.warn("checked hust.config.js changed, restarting the server...");
+          server.stopCallback(() => {
+            watcher.close();
+            this.dev();
+          });
         });
       });
-    });
 
-    // WDS 没有编译完成回调事件，所以需要注册webpack hooks
-    compiler.hooks.done.tap("hust dev", () => {
-      log();
-      logger.info(`  App running at:`);
-      log(`  - Local:   ${chalk.green(`http://localhost:${port}`)}`);
-      log(`  - Network: ${chalk.green(`http://${localIPv4}:${port}`)}`);
-      log();
-    });
+      // WDS 没有编译完成回调事件，所以需要注册webpack hooks
+      compiler.hooks.done.tap("hust dev", () => {
+        log();
+        logger.info(`  App running at:`);
+        log(`  - Local:   ${chalk.green(`http://localhost:${port}`)}`);
+        log(`  - Network: ${chalk.green(`http://${localIPv4}:${port}`)}`);
+        log();
+      });
 
-    server.start().catch(err => {
+      server.start().catch(err => {
+        throw err;
+      });
+    } catch (err) {
       console.log(err);
       process.exit(1);
-    });
+    }
   };
 
   build = () => {
     logger.info("Starting build optimized resources...\n");
     const webpackConfig = this.resolveWebpackConfig();
-    const compiler = webpack(webpackConfig);
-    compiler.run((err, stats) => {
-      console.log(err);
-
-      if (stats) {
-        fs.writeFileSync(`${webpackConfig.output?.path}/bundle-stats.json`, JSON.stringify(stats.toJson()));
+    webpack(webpackConfig, (err, stats) => {
+      if (err) {
+        console.error(err);
+        return;
       }
+
+      console.log(
+        stats?.toString({
+          chunks: false, // Makes the build much quieter
+          colors: true, // Shows colors in the console
+        })
+      );
     });
   };
 
@@ -153,9 +163,11 @@ class Service {
         defaultSizes: "parsed",
       })
     );
-    webpack(webpackConfig, () => {
-      // [Stats Object](#stats-object)
-      logger.success("build analysis resource successfully, now you can see the filesize map in your default browser.");
+    webpack(webpackConfig, (err, stats) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
     });
   };
 

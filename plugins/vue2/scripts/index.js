@@ -5,9 +5,6 @@ module.exports = function (api, projectName) {
     name: projectName,
     dependencies: {
       vue: "^2.6.14",
-      "vue-router": "^3.5.3",
-      vuex: "^4.0.2",
-      "vue-i18n": "^8.15.4",
     },
     browserslist: {
       development: ["last 1 version"],

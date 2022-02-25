@@ -7,7 +7,7 @@ import PluginAPI from "./PluginAPI";
  * CLI额外参数
  */
 export interface CommanderOptions {
-  template: "vue2" | "vue3";
+  template: "vue2" | "vue3" | "react";
 }
 
 /**

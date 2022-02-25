@@ -91,20 +91,15 @@ export default function (projectConfig: ConfigType): webpack.Configuration {
             options: {
               cacheDirectory: true,
               presets: [
-                "@babel/preset-env",
-                {
-                  useBuiltIns: "usage",
-                  exclude: [
-                    // https://webpack.js.org/loaders/babel-loader/#exclude-libraries-that-should-not-be-transpiled
-                    /node_modules[\\\/]core-js/,
-                    /node_modules[\\\/]webpack[\\\/]buildin/,
-                    /node_modules[\\\/]lodash/,
-                    "jquery",
-                  ],
-                  // allow use ecma proposal features:https://babeljs.io/docs/en/babel-preset-env#shippedproposals
-                  shippedProposals: true,
-                  corejs: { version: "3.20", proposals: true },
-                },
+                [
+                  "@babel/preset-env",
+                  {
+                    useBuiltIns: "usage",
+                    // allow use ecma proposal features:https://babeljs.io/docs/en/babel-preset-env#shippedproposals
+                    shippedProposals: true,
+                    corejs: { version: "3.20", proposals: true },
+                  },
+                ],
               ],
               plugins: ["@babel/plugin-transform-runtime", "@babel/plugin-proposal-class-properties"],
             },
@@ -199,7 +194,18 @@ export default function (projectConfig: ConfigType): webpack.Configuration {
       }),
       // copy public to dist output folder
       new CopyWebpackPlugin({
-        patterns: [{ from: "public", to: outputPath }],
+        patterns: [
+          {
+            from: "public/**/*",
+            to: outputPath,
+            // 防止和HtmlWebpackPlugin生成的html重复
+            globOptions: {
+              dot: true,
+              gitignore: true,
+              ignore: ["index.html"],
+            },
+          },
+        ],
       }),
       // convert process
       new webpack.DefinePlugin(
@@ -212,7 +218,7 @@ export default function (projectConfig: ConfigType): webpack.Configuration {
         )
       ),
       new WebpackBar(),
-    ],
+    ].filter(Boolean),
     // hardsource cache, make compiler fast:https://webpack.js.org/configuration/cache/#cachebuilddependencies
     cache: {
       type: "filesystem",
