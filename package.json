@@ -1,15 +1,15 @@
 {
-  "name": "hust",
+  "name": "trust",
   "version": "1.0.0",
   "author": "wangkai",
-  "description": "cli",
+  "description": "nodejs cli for frontend development",
   "scripts": {
     "build": "cross-env NODE_ENV=production node esbuild.js",
     "build:plugin": "cd plugins/vue2 && npm run build",
     "local": "cross-env NODE_ENV=development node esbuild.js"
   },
   "bin": {
-    "hust": "bin/hust.js"
+    "trust": "bin/index.js"
   },
   "files": [
     "bin/**/*.",

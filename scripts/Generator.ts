@@ -47,6 +47,7 @@ class Generator {
   resolvePlugins = () => {
     const { template } = this.options;
 
+    // TODO:改成npm包的引入方式
     const pluginPath = path.resolve(process.cwd(), `./plugins/${template || "vue2"}/lib`);
     this.plugins.push({
       id: `@hust/plugin-${template || "vue2"}`,

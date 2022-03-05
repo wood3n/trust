@@ -8,7 +8,7 @@ module.exports = function (api, projectName) {
     },
     browserslist: {
       development: ["last 1 version"],
-      production: ["> 1%", "last 2 versions", "ios >= 8", "android >= 4.0"],
+      production: ["> 1%", "last 2 versions", "ie 10"],
     },
   });
 
